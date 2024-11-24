@@ -1,4 +1,9 @@
-﻿namespace TacotitosFoodTruck.Views
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using System.Resources;
+using TacotitosFoodTruck.Model;
+using TacotitosFoodTruck.Models;
+
+namespace TacotitosFoodTruck.Views
 {
     partial class MainForm
     {
@@ -9,6 +14,9 @@
         private System.Windows.Forms.Label lblConnectionStatus;
         private System.Windows.Forms.Button btnClient;
         private System.Windows.Forms.Button btnAdmin;
+        
+
+
         /// <summary>
         ///  Clean up any resources being used.
         /// </summary>
@@ -30,52 +38,82 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.lblConnectionStatus = new System.Windows.Forms.Label();
-            this.btnClient = new System.Windows.Forms.Button();
-            this.btnAdmin = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            lblConnectionStatus = new Label();
+            btnClient = new Button();
+            btnAdmin = new Button();
 
+            SuspendLayout();
+            // 
             // lblConnectionStatus
-             
-            this.lblConnectionStatus.AutoSize = true;
-            this.lblConnectionStatus.Location = new System.Drawing.Point(12, 9);
-            this.lblConnectionStatus.Name = "lblConnectionStatus";
-            this.lblConnectionStatus.Size = new System.Drawing.Size(0, 13); // Inicia vacío
-            this.lblConnectionStatus.TabIndex = 0;
-            this.lblConnectionStatus.Visible = false; // Oculto por defecto
-
+            // 
+            lblConnectionStatus.AutoSize = true;
+            lblConnectionStatus.Location = new Point(14, 10);
+            lblConnectionStatus.Margin = new Padding(4, 0, 4, 0);
+            lblConnectionStatus.Name = "lblConnectionStatus";
+            lblConnectionStatus.Size = new Size(0, 15);
+            lblConnectionStatus.TabIndex = 0;
+            lblConnectionStatus.Visible = false;
+            // 
             // btnClient
-            this.btnClient.Location = new System.Drawing.Point(50, 50);
-            this.btnClient.Name = "btnClient";
-            this.btnClient.Size = new System.Drawing.Size(100, 30);
-            this.btnClient.TabIndex = 0;
-            this.btnClient.Text = "Client";
-            this.btnClient.UseVisualStyleBackColor = true;
-            this.btnClient.Click += new System.EventHandler(this.btnClient_Click);
-
+            // 
+            btnClient.Location = new Point(1070, 339);
+            btnClient.Margin = new Padding(4, 3, 4, 3);
+            btnClient.Name = "btnClient";
+            btnClient.Size = new Size(200, 200); // Tamaño de los botones
+            btnClient.TabIndex = 0;
+            btnClient.Text = ""; // Sin texto, solo imagen
+            btnClient.Text = "Client";
+            btnClient.Image = Image.FromFile("Images/ClientImage.png");
+            btnClient.FlatStyle = FlatStyle.Flat;
+            btnClient.FlatAppearance.BorderSize = 0;
+            btnClient.UseVisualStyleBackColor = true;
+            btnClient.ImageAlign = ContentAlignment.MiddleCenter;
+            btnClient.Image = new Bitmap(Image.FromFile("Images/ClientImage.png"), new Size(200, 200)); // Ajustar imagen al tamaño del botón
+            btnClient.Click += btnClient_Click;
+            // 
             // btnAdmin
-            this.btnAdmin.Location = new System.Drawing.Point(50, 100);
-            this.btnAdmin.Name = "btnAdmin";
-            this.btnAdmin.Size = new System.Drawing.Size(100, 30);
-            this.btnAdmin.TabIndex = 1;
-            this.btnAdmin.Text = "Admin";
-            this.btnAdmin.UseVisualStyleBackColor = true;
-            this.btnAdmin.Click += new System.EventHandler(this.btnAdmin_Click);
-
+            // 
+            btnAdmin.Location = new Point(110, 339);
+            btnAdmin.Margin = new Padding(4, 3, 4, 3);
+            btnAdmin.Name = "btnAdmin";
+            btnAdmin.Size = new Size(200, 200); // Tamaño de los botones
+            btnAdmin.TabIndex = 1;
+            btnAdmin.Text = ""; // Sin texto, solo imagen
+            btnAdmin.Text = "Admin";
+            btnAdmin.Image = Image.FromFile("Images/AdminImage.png");
+            btnAdmin.FlatStyle = FlatStyle.Flat;
+            btnAdmin.FlatAppearance.BorderSize = 0;
+            btnAdmin.UseVisualStyleBackColor = true;
+            btnAdmin.ImageAlign = ContentAlignment.MiddleCenter;
+            btnAdmin.Image = new Bitmap(Image.FromFile("Images/AdminImage.png"), new Size(200, 200)); // Ajustar imagen al tamaño del botón
+            btnAdmin.Click += btnAdmin_Click;
+            // 
             // MainForm
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(300, 200);
-            this.Controls.Add(this.lblConnectionStatus);
-            this.Controls.Add(this.btnAdmin);
-            this.Controls.Add(this.btnClient);
-            this.Name = "MainForm";
-            this.Text = "Tacotitos Food Truck";
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.White;
+            ClientSize = new Size(1366, 720);
+            Controls.Add(lblConnectionStatus);
+            Controls.Add(btnClient);
+            Controls.Add(btnAdmin);
+            BackgroundImage = Image.FromFile("Images/Tacotitos-Logo (1).png");
+            BackgroundImageLayout = ImageLayout.Center; // Mantener tamaño original y centrar
+            Margin = new Padding(4, 3, 4, 3);
+            Name = "MainForm";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Tacotitos Food Truck";
+            Icon = new Icon("Images/Tacotitos-Favicon.ico");
+
+            ResumeLayout(false);
+            PerformLayout();
+
         }
         
-
-        #endregion
+        
     }
+
+
+#endregion
 }
+
