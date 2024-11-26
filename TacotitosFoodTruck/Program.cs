@@ -11,11 +11,3 @@ namespace TacotitosFoodTruck.Views
         }
     }
 }
-
-
-
-
-
-
-
-

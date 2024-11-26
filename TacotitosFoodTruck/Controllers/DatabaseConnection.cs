@@ -45,10 +45,11 @@ namespace TacotitosFoodTruck.Data
         {
             if (connection == null || connection.State == System.Data.ConnectionState.Closed)
             {
-                throw new InvalidOperationException("No active connection. Call Connect() first.");
+                Connect(); // Llama a Connect automáticamente si no hay una conexión activa
             }
             return connection;
         }
+
 
         /// <summary>
         /// Cierra la conexión si está abierta.
@@ -62,4 +63,3 @@ namespace TacotitosFoodTruck.Data
         }
     }
 }
-

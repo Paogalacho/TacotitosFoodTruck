@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualBasic.ApplicationServices;
 using System.Resources;
 using TacotitosFoodTruck.Model;
-using TacotitosFoodTruck.Models;
+
 
 namespace TacotitosFoodTruck.Views
 {

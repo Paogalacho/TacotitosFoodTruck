@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TacotitosFoodTruck.Model
+﻿namespace TacotitosFoodTruck.Model
 {
-    internal class Tortilla
+    public class Tortilla
     {
+        public int TortillaId { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+
+       
     }
 }
