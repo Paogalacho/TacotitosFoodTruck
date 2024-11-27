@@ -32,7 +32,26 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Text = "AdminForm";
+
+            SuspendLayout();
+
+
+            // 
+            // AdminForm
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.White;
+            ClientSize = new Size(1366, 720);
+            BackgroundImage = Image.FromFile("Images/Tacotitos-Logo (1).png");
+            BackgroundImageLayout = ImageLayout.Center; // Mantener tamaño original y centrar
+            Margin = new Padding(4, 3, 4, 3);
+            Name = "AdminForm";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Tacotitos Food Truck";
+            Icon = new Icon("Images/Tacotitos-Favicon.ico");
         }
+
 
         #endregion
     }
