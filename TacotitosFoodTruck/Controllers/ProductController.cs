@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TacotitosFoodTruck.DAO;
+﻿using TacotitosFoodTruck.DAO;
 using TacotitosFoodTruck.Model;
 
 namespace TacotitosFoodTruck.Controllers
@@ -24,18 +19,25 @@ namespace TacotitosFoodTruck.Controllers
         }
 
         #region Ingredients
-        public List<Ingredient> GetAllIngredients() => ingredientDao.GetAllIngredients();
-
-        public void AddIngredient(string name, decimal price)
-        {
-            var ingredient = new Ingredient { Name = name, Price = price };
-            ingredientDao.AddIngredient(ingredient);
-        }
-
-        public void AddIngredient(Ingredient ingredient)
+       
+        public List<Ingredient> GetAllIngredients()
         {
             try
             {
+                return ingredientDao.GetAllIngredients();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error fetching tortillas: " + ex.Message, ex);
+            }
+        }
+
+
+        public void AddIngredient(string name, decimal price)
+        {
+            try
+            {
+                var ingredient = new Ingredient { Name = name, Price = price };
                 ingredientDao.AddIngredient(ingredient);
             }
             catch (Exception ex)
@@ -83,10 +85,11 @@ namespace TacotitosFoodTruck.Controllers
             }
         }
 
-        public void addTortilla(Tortilla tortilla)
+        public void AddTortilla(string name, decimal price)
         {
             try
             {
+                var tortilla = new Tortilla { Name = name, Price = price };
                 tortillaDao.AddTortilla(tortilla);
             }
             catch (Exception ex)
@@ -94,6 +97,8 @@ namespace TacotitosFoodTruck.Controllers
                 throw new Exception("Error creating tortillas: " + ex.Message, ex);
             }
         }
+
+      
 
         public void UpdateTortilla(Tortilla tortilla)
         {
@@ -134,10 +139,11 @@ namespace TacotitosFoodTruck.Controllers
         }
 
 
-        public void addSauce(Sauce sauce)
+        public void AddSauce(string name, decimal price)
         {
             try
             {
+                var sauce = new Sauce { Name = name, Price = price };
                 sauceDao.AddSauce(sauce);
             }
             catch (Exception ex)
@@ -145,6 +151,7 @@ namespace TacotitosFoodTruck.Controllers
                 throw new Exception("Error creating sauces: " + ex.Message, ex);
             }
         }
+
 
         public void UpdateSauce(Sauce sauce)
         {
@@ -169,14 +176,11 @@ namespace TacotitosFoodTruck.Controllers
                 throw new Exception("Error deleting sauces: " + ex.Message, ex);
             }
         }
+
+
+    
+
         #endregion
-
-
-
-
-
-
-
 
     }
 

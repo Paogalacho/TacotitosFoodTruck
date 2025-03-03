@@ -1,6 +1,4 @@
 ﻿using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
 using TacotitosFoodTruck.Data;
 using TacotitosFoodTruck.Model;
 
@@ -9,177 +7,172 @@ namespace TacotitosFoodTruck.DAO
     public class TacoDao
     {
         private readonly DatabaseConnection dbConnection;
-        private readonly TortillaDao tortillaDao;
-        private readonly IngredientDao ingredientDao;
+      
 
         public TacoDao()
         {
             dbConnection = DatabaseConnection.GetInstance();
-            tortillaDao = new TortillaDao();
-            ingredientDao = new IngredientDao();
+            
         }
+
 
         public int AddTaco(Taco taco)
         {
-            int tacoId = 0; // Inicializa el ID del taco
+            int tacoId = 0;
+            taco.CalculateTotalPrice();
 
-            // Calculamos el precio total antes de la inserción
-            taco.CalculateTotalPrice(); 
 
             using (var connection = dbConnection.GetConnection())
             {
-                using (var transaction = connection.BeginTransaction())
+                // Insert the taco
+                string insertTacoQuery = @"INSERT INTO taco (name, total_price, sauce_id, created_at)
+                                           VALUES (@name, @totalPrice, @sauceId, @createdAt);
+                                           SELECT LAST_INSERT_ID();";
+                using (var cmd = new MySqlCommand(insertTacoQuery, connection))
                 {
-                    try
+                    cmd.Parameters.AddWithValue("@name", taco.Name);
+                    cmd.Parameters.AddWithValue("@totalPrice", taco.TotalPrice);
+                    cmd.Parameters.AddWithValue("@sauceId",
+                        taco.Sauce?.SauceId > 0
+                            ? (object)taco.Sauce.SauceId
+                            : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@createdAt", taco.CreatedAt);
+
+                    tacoId = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+
+                // Insert tortillas
+                foreach (var tortilla in taco.Tortillas)
+                {
+                    string insertTortillaQuery = "INSERT INTO taco_tortilla (taco_id, tortilla_id) VALUES (@tacoId, @tortillaId)";
+                    using (var cmd = new MySqlCommand(insertTortillaQuery, connection))
                     {
-                        // Insertar el taco en la tabla 'taco'
-                        string insertTacoQuery = @"INSERT INTO taco (name, total_price, sauce_id, created_at)
-                                           VALUES (@name, @totalPrice, @sauceId, @createdAt)";
-                        using (var cmd = new MySqlCommand(insertTacoQuery, connection, transaction))
-                        {
-                            cmd.Parameters.AddWithValue("@name", taco.Name);
-                            cmd.Parameters.AddWithValue("@totalPrice", taco.TotalPrice);  // Usar el precio total calculado
-                            cmd.Parameters.AddWithValue("@sauceId", taco.Sauce?.SauceId ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@createdAt", taco.CreatedAt);
-
-                            cmd.ExecuteNonQuery();
-                            tacoId = (int)cmd.LastInsertedId; // Obtiene el ID del taco recién insertado
-                        }
-
-                        // Insertar las tortillas asociadas
-                        InsertTortillas(tacoId, taco.Tortillas, connection, transaction);
-
-                        // Insertar los ingredientes asociados
-                        InsertIngredients(tacoId, taco.Ingredients, connection, transaction);
-
-                        // Confirmamos la transacción
-                        transaction.Commit();
-                    }
-                    catch
-                    {
-                        // En caso de error, hacemos rollback
-                        transaction.Rollback();
-                        throw new Exception("Error while adding the taco. Transaction rolled back.");
+                        cmd.Parameters.AddWithValue("@tacoId", tacoId);
+                        cmd.Parameters.AddWithValue("@tortillaId", tortilla.Id);
+                        cmd.ExecuteNonQuery();
                     }
                 }
-            }
-            return tacoId; // Retorna el ID del taco creado
-        }
 
-
-
-        private void InsertTortillas(int tacoId, List<Tortilla> tortillas, MySqlConnection connection, MySqlTransaction transaction)
-        {
-            string tortillaQuery = "INSERT INTO taco_tortilla (taco_id, tortilla_id) VALUES (@taco_id, @tortilla_id)";
-            foreach (var tortilla in tortillas)
-            {
-                using (var tortillaCommand = new MySqlCommand(tortillaQuery, connection, transaction))
+                // Insert ingredients
+                foreach (var ingredient in taco.Ingredients)
                 {
-                    tortillaCommand.Parameters.AddWithValue("@taco_id", tacoId);
-                    tortillaCommand.Parameters.AddWithValue("@tortilla_id", tortilla.TortillaId);
-                    tortillaCommand.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private void InsertIngredients(int tacoId, List<Ingredient> ingredients, MySqlConnection connection, MySqlTransaction transaction)
-         {
-             string ingredientQuery = "INSERT INTO taco_ingredient (taco_id, ingredient_id) VALUES (@taco_id, @ingredient_id)";
-             foreach (var ingredient in ingredients)
-             {
-                 using (var ingredientCommand = new MySqlCommand(ingredientQuery, connection, transaction))
-                 {
-                     ingredientCommand.Parameters.AddWithValue("@taco_id", tacoId);
-                     ingredientCommand.Parameters.AddWithValue("@ingredient_id", ingredient.IngredientId);
-                     ingredientCommand.ExecuteNonQuery();
-                 }
-             }
-         }
-
-
-
-        public Taco GetTacoWithDetails(int tacoId)
-        {
-            Taco taco = null;
-            using (var connection = dbConnection.GetConnection())
-            {
-                string query = @"SELECT t.*, s.name AS sauce_name, s.price AS sauce_price
-                         FROM taco t
-                         LEFT JOIN sauce s ON t.sauce_id = s.sauce_id
-                         WHERE t.taco_id = @id";
-
-                using (var command = new MySqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@id", tacoId);
-                    using (var reader = command.ExecuteReader())
+                    string insertIngredientQuery = "INSERT INTO taco_ingredient (taco_id, ingredient_id) VALUES (@tacoId, @ingredientId)";
+                    using (var cmd = new MySqlCommand(insertIngredientQuery, connection))
                     {
-                        if (reader.Read())
-                        {
-                            taco = MapTaco(reader);
-                            taco.Tortillas = tortillaDao.GetTortillasByTacoId(taco.TacoId);
-                            taco.Ingredients = ingredientDao.GetIngredientsByTacoId(taco.TacoId);
-                        }
+                        cmd.Parameters.AddWithValue("@tacoId", tacoId);
+                        cmd.Parameters.AddWithValue("@ingredientId", ingredient.Id);
+                        cmd.ExecuteNonQuery();
                     }
                 }
             }
-            return taco;
+            return tacoId;
         }
 
-
-
-        public Taco GetTacoById(int tacoId)
-        {
-            Taco taco = null;
-            using (var connection = dbConnection.GetConnection())
-            {
-                
-                string query = "SELECT * FROM taco WHERE taco_id = @id";
-                using (var command = new MySqlCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@id", tacoId);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            taco = MapTaco(reader);
-                        }
-                    }
-                }
-            }
-
-        
-            return taco;
-        }
 
         public List<Taco> GetAllTacos()
         {
-            var tacos = new List<Taco>();
-            using (var connection = dbConnection.GetConnection())
+            Dictionary<int, Taco> tacos = new Dictionary<int, Taco>();
+            using (MySqlConnection connection = dbConnection.GetConnection())
             {
-                
-                string query = "SELECT * FROM taco";
-                using (var command = new MySqlCommand(query, connection))
+                string query = @"
+    SELECT t.taco_id, t.name, t.total_price, t.sauce_id, t.created_at,
+           s.name as sauce_name, s.price as sauce_price,
+           tor.tortilla_id, tor.name as tortilla_name, tor.price as tortilla_price,
+           ing.ingredient_id, ing.name as ingredient_name, ing.price as ingredient_price
+    FROM taco t
+    LEFT JOIN sauce s ON t.sauce_id = s.sauce_id
+    LEFT JOIN taco_tortilla tt ON t.taco_id = tt.taco_id
+    LEFT JOIN tortilla tor ON tt.tortilla_id = tor.tortilla_id
+    LEFT JOIN taco_ingredient ti ON t.taco_id = ti.taco_id
+    LEFT JOIN ingredient ing ON ti.ingredient_id = ing.ingredient_id
+    ORDER BY t.taco_id";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
-                    using (var reader = command.ExecuteReader())
+                    using (MySqlDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            var taco = MapTaco(reader);
-                            // Cargar tortillas e ingredientes asociados
-                            taco.Tortillas = tortillaDao.GetTortillasByTacoId(taco.TacoId);
-                            taco.Ingredients = ingredientDao.GetIngredientsByTacoId(taco.TacoId);
-                            tacos.Add(taco);
+                            int tacoId = reader.GetInt32("taco_id");
+                            if (!tacos.ContainsKey(tacoId))
+                            {
+                                Taco taco = new Taco();
+                                taco.TacoId = tacoId;
+                                taco.Name = reader.GetString("name");
+                                taco.TotalPrice = reader.GetDecimal("total_price");
+                                taco.CreatedAt = reader.GetDateTime("created_at");
+                                taco.Tortillas = new List<Tortilla>();
+                                taco.Ingredients = new List<Ingredient>();
+
+                                if (!reader.IsDBNull(reader.GetOrdinal("sauce_name")))
+                                {
+                                    Sauce sauce = new Sauce();
+                                    sauce.SauceId = reader.GetInt32("sauce_id");
+                                    sauce.Name = reader.GetString("sauce_name");
+                                    sauce.Price = reader.GetDecimal("sauce_price");
+                                    taco.Sauce = sauce;
+                                }
+
+                                tacos[tacoId] = taco;
+                            }
+
+                            if (!reader.IsDBNull(reader.GetOrdinal("tortilla_id")))
+                            {
+                                Tortilla tortilla = new Tortilla();
+                                tortilla.Id = reader.GetInt32("tortilla_id");
+                                tortilla.Name = reader.GetString("tortilla_name");
+                                tortilla.Price = reader.GetDecimal("tortilla_price");
+
+                                bool tortillaExists = false;
+                                foreach (Tortilla existingTortilla in tacos[tacoId].Tortillas)
+                                {
+                                    if (existingTortilla.Id == tortilla.Id)
+                                    {
+                                        tortillaExists = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!tortillaExists)
+                                {
+                                    tacos[tacoId].Tortillas.Add(tortilla);
+                                }
+                            }
+
+                            if (!reader.IsDBNull(reader.GetOrdinal("ingredient_id")))
+                            {
+                                Ingredient ingredient = new Ingredient();
+                                ingredient.Id = reader.GetInt32("ingredient_id");
+                                ingredient.Name = reader.GetString("ingredient_name");
+                                ingredient.Price = reader.GetDecimal("ingredient_price");
+
+                                bool ingredientExists = false;
+                                foreach (Ingredient existingIngredient in tacos[tacoId].Ingredients)
+                                {
+                                    if (existingIngredient.Id == ingredient.Id)
+                                    {
+                                        ingredientExists = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!ingredientExists)
+                                {
+                                    tacos[tacoId].Ingredients.Add(ingredient);
+                                }
+                            }
                         }
                     }
                 }
             }
-            return tacos;
+
+            List<Taco> tacoList = new List<Taco>();
+            foreach (Taco taco in tacos.Values)
+            {
+                tacoList.Add(taco);
+            }
+            return tacoList;
         }
-
-        
-
-
-        
 
         // Obtener el taco más económico
         public Taco GetCheapestTaco()
@@ -188,16 +181,14 @@ namespace TacotitosFoodTruck.DAO
             using (var connection = dbConnection.GetConnection())
             {
                 string query = @"
-                SELECT taco.*, SUM(tortilla.price) + SUM(ingredient.price) + IFNULL(sauce.price, 0) AS total_price
+                SELECT 
+                taco.taco_id, 
+                taco.name, 
+                taco.total_price, 
+                taco.created_at
                 FROM taco
-                LEFT JOIN taco_tortilla tt ON taco.taco_id = tt.taco_id
-                LEFT JOIN tortilla ON tt.tortilla_id = tortilla.tortilla_id
-                LEFT JOIN taco_ingredient ti ON taco.taco_id = ti.taco_id
-                LEFT JOIN ingredient ON ti.ingredient_id = ingredient.ingredient_id
-                LEFT JOIN sauce ON taco.sauce_id = sauce.sauce_id
-                GROUP BY taco.taco_id
-                ORDER BY total_price ASC
-                LIMIT 1";  // Solo el más barato
+                ORDER BY taco.total_price ASC
+                LIMIT 1";
 
                 using (var command = new MySqlCommand(query, connection))
                 {
@@ -205,15 +196,19 @@ namespace TacotitosFoodTruck.DAO
                     {
                         if (reader.Read())
                         {
-                            taco = MapTaco(reader);
-                            taco.TotalPrice = reader.GetDecimal("total_price");
+                            taco = new Taco
+                            {
+                                TacoId = reader.GetInt32("taco_id"),
+                                Name = reader.GetString("name"),
+                                TotalPrice = reader.GetDecimal("total_price"),
+                                CreatedAt = reader.GetDateTime("created_at")
+                            };
                         }
                     }
                 }
             }
             return taco;
         }
-
         // Obtener el taco más costoso
         public Taco GetMostExpensiveTaco()
         {
@@ -221,16 +216,14 @@ namespace TacotitosFoodTruck.DAO
             using (var connection = dbConnection.GetConnection())
             {
                 string query = @"
-                SELECT taco.*, SUM(tortilla.price) + SUM(ingredient.price) + IFNULL(sauce.price, 0) AS total_price
-                FROM taco
-                LEFT JOIN taco_tortilla tt ON taco.taco_id = tt.taco_id
-                LEFT JOIN tortilla ON tt.tortilla_id = tortilla.tortilla_id
-                LEFT JOIN taco_ingredient ti ON taco.taco_id = ti.taco_id
-                LEFT JOIN ingredient ON ti.ingredient_id = ingredient.ingredient_id
-                LEFT JOIN sauce ON taco.sauce_id = sauce.sauce_id
-                GROUP BY taco.taco_id
-                ORDER BY total_price DESC
-                LIMIT 1";  // Solo el más caro
+            SELECT 
+                taco.taco_id, 
+                taco.name, 
+                taco.total_price, 
+                taco.created_at
+            FROM taco
+            ORDER BY taco.total_price DESC
+            LIMIT 1";
 
                 using (var command = new MySqlCommand(query, connection))
                 {
@@ -238,8 +231,13 @@ namespace TacotitosFoodTruck.DAO
                     {
                         if (reader.Read())
                         {
-                            taco = MapTaco(reader);
-                            taco.TotalPrice = reader.GetDecimal("total_price");
+                            taco = new Taco
+                            {
+                                TacoId = reader.GetInt32("taco_id"),
+                                Name = reader.GetString("name"),
+                                TotalPrice = reader.GetDecimal("total_price"),
+                                CreatedAt = reader.GetDateTime("created_at")
+                            };
                         }
                     }
                 }
@@ -274,31 +272,6 @@ namespace TacotitosFoodTruck.DAO
             return averagePrice;
         }
 
-
-
-
-
-
-        // Método auxiliar para mapear el taco
-        private Taco MapTaco(MySqlDataReader reader)
-        {
-            return new Taco
-            {
-                TacoId = reader.GetInt32("taco_id"),
-                Name = reader.GetString("name"),
-                TotalPrice = reader.GetDecimal("total_price"),
-                Sauce = new Sauce
-                {
-                    SauceId = reader.GetInt32("sauce_id"),
-                    Name = reader.GetString("name"),
-                    Price = reader.GetDecimal("price")
-                },
-                CreatedAt = reader.GetDateTime("created_at")
-            };
-        }
-
-
-
-
     }
 }
+

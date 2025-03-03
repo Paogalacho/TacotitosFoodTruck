@@ -1,56 +1,118 @@
-﻿using TacotitosFoodTruck.Model;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
-public class Taco
+namespace TacotitosFoodTruck.Model
 {
-    public int TacoId { get; set; }
-    public string Name { get; set; }
-    public List<Tortilla> Tortillas { get; set; }
-    public List<Ingredient> Ingredients { get; set; }
-    public Sauce Sauce { get; set; }
-    public decimal TotalPrice { get; set; }
-    public DateTime CreatedAt { get; set; }
-
-    // Constructor sin parámetros
-    public Taco()
+    public class Taco
     {
-        Tortillas = new List<Tortilla>();
-        Ingredients = new List<Ingredient>();
-    }
+        public int TacoId { get; set; }
+        public string Name { get; set; }
+        public List<Tortilla> Tortillas { get; set; }
+        public List<Ingredient> Ingredients { get; set; }
+        public Sauce Sauce { get; set; }
+        public decimal TotalPrice { get; set; }
+        public DateTime CreatedAt { get; set; }
 
-    // Constructor con parámetros
-    public Taco(string name, List<Tortilla> tortillas, List<Ingredient> ingredients, Sauce sauce)
-    {
-        Name = name;
-        Tortillas = tortillas;
-        Ingredients = ingredients;
-        Sauce = sauce;
-        CalculateTotalPrice();
-        CreatedAt = DateTime.Now;
-    }
-
-
-
-    public void CalculateTotalPrice()
-    {
-        TotalPrice = 0; // Inicializamos el precio total
-
-        // Sumar el precio de la salsa
-        if (Sauce != null)
+        public Taco()
         {
-            TotalPrice += Sauce.Price;
+            Tortillas = new List<Tortilla>();
+            Ingredients = new List<Ingredient>();
         }
 
-        // Sumar el precio de las tortillas
-        if (Tortillas != null && Tortillas.Any())
+
+        public void AddTortillas(List<Tortilla> tortillas)
         {
-            TotalPrice += Tortillas.Sum(t => t.Price);
+            if (Tortillas.Count + tortillas.Count > 2)
+            {
+                throw new ArgumentException("Un taco no puede tener más de dos tortillas.");
+            }
+            Tortillas.AddRange(tortillas);
+            CalculateTotalPrice();
         }
 
-        // Sumar el precio de los ingredientes
-        if (Ingredients != null && Ingredients.Any())
+        public void AddIngredients(List<Ingredient> ingredients)
         {
-            TotalPrice += Ingredients.Sum(i => i.Price);
+            if (Ingredients.Count + ingredients.Count > 5)
+            {
+                throw new ArgumentException("Un taco no puede tener más de cinco ingredientes.");
+            }
+            Ingredients.AddRange(ingredients);
+            CalculateTotalPrice();
+        }
+
+        public void SetSauce(Sauce sauce)
+        {
+            Sauce = sauce;
+            CalculateTotalPrice();
+        }
+
+        public void CalculateTotalPrice()
+        {
+            decimal tortillasTotal = 0;
+            foreach (Tortilla tortilla in Tortillas)
+            {
+                tortillasTotal += tortilla.Price;
+            }
+
+            decimal ingredientsTotal = 0;
+            foreach (Ingredient ingredient in Ingredients)
+            {
+                ingredientsTotal += ingredient.Price;
+            }
+
+            decimal saucePrice = 0;
+            if (Sauce != null)
+            {
+                saucePrice = Sauce.Price;
+            }
+
+            TotalPrice = tortillasTotal + ingredientsTotal + saucePrice;
+        }
+
+        public class SelectedItemView
+        {
+            public string Category { get; set; }
+            public string Name { get; set; }
+            public decimal Price { get; set; }
+        }
+
+        public List<SelectedItemView> GetSelectedItemViews()
+        {
+            var selectedItems = new List<SelectedItemView>();
+
+            foreach (var tortilla in Tortillas)
+            {
+                selectedItems.Add(new SelectedItemView
+                {
+                    Category = "Tortilla",
+                    Name = tortilla.Name,
+                    Price = tortilla.Price
+                });
+            }
+
+            foreach (var ingredient in Ingredients)
+            {
+                selectedItems.Add(new SelectedItemView
+                {
+                    Category = "Ingrediente",
+                    Name = ingredient.Name,
+                    Price = ingredient.Price
+                });
+            }
+
+            if (Sauce != null)
+            {
+                selectedItems.Add(new SelectedItemView
+                {
+                    Category = "Salsa",
+                    Name = Sauce.Name,
+                    Price = Sauce.Price
+                });
+            }
+
+            return selectedItems;
         }
     }
-
 }
+

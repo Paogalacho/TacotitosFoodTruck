@@ -1,7 +1,3 @@
-using System;
-using System.Windows.Forms;
-using MySql.Data.MySqlClient;
-using TacotitosFoodTruck.Controllers;
 using TacotitosFoodTruck.Data;
 
 namespace TacotitosFoodTruck.Views

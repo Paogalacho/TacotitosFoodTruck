@@ -1,6 +1,4 @@
 ﻿using MySql.Data.MySqlClient;
-using System;
-using System.Collections.Generic;
 using TacotitosFoodTruck.Data;
 using TacotitosFoodTruck.Model;
 
@@ -15,33 +13,7 @@ namespace TacotitosFoodTruck.DAO
             dbConnection = DatabaseConnection.GetInstance();
         }
 
-        // Obtener salsas por sus IDs
-        public List<Sauce> GetSaucesByIds(int[] sauceIds)
-        {
-            var sauces = new List<Sauce>();
-            using (var connection = dbConnection.GetConnection())
-            {
-                
-                string query = $"SELECT * FROM sauce WHERE sauce_id IN ({string.Join(",", sauceIds)})";
-                using (var command = new MySqlCommand(query, connection))
-                {
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            sauces.Add(new Sauce
-                            {
-                                SauceId = reader.GetInt32("sauce_id"),
-                                Name = reader.GetString("name"),
-                                Price = reader.GetDecimal("price")
-                            });
-                        }
-                    }
-                }
-            }
-            return sauces;
-        }
-
+       
         // Obtener todas las salsas
         public List<Sauce> GetAllSauces()
         {
